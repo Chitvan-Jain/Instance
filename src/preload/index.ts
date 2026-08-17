@@ -1,8 +1,15 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { Bundle } from '../shared/bundle'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  bundles: {
+    list: (): Promise<Bundle[]> => ipcRenderer.invoke('bundles:list'),
+    create: (name: string): Promise<Bundle> => ipcRenderer.invoke('bundles:create', name),
+    delete: (id: string): Promise<void> => ipcRenderer.invoke('bundles:delete', id)
+  }
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

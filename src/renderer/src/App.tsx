@@ -1,34 +1,53 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { useEffect, useState } from 'react'
+import type { Bundle } from '@shared/bundle'
 
 function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const [bundles, setBundles] = useState<Bundle[]>([])
+  const [name, setName] = useState('')
+
+  const refresh = async (): Promise<void> => {
+    const list = await window.api.bundles.list()
+    setBundles(list)
+  }
+
+  useEffect(() => {
+    refresh()
+  }, [])
+
+  const handleCreate = async (): Promise<void> => {
+    if (!name.trim()) return
+    await window.api.bundles.create(name.trim())
+    setName('')
+    refresh()
+  }
+
+  const handleDelete = async (id: string): Promise<void> => {
+    await window.api.bundles.delete(id)
+    refresh()
+  }
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
+    <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
+      <h1>Project Bundler</h1>
+
+      <div style={{ marginBottom: 16 }}>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bundle name" />
+        <button onClick={handleCreate}>Bundle</button>
       </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+
+      <ul>
+        {bundles.map((b) => (
+          <li key={b.id}>
+            {b.name}
+            <button onClick={() => handleDelete(b.id)} style={{ marginLeft: 8 }}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {bundles.length === 0 && <p>No bundles yet — create one above.</p>}
+    </div>
   )
 }
 
