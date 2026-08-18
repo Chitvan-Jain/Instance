@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { Bundle } from '@shared/bundle'
+import type { DetectedWindow } from '@shared/window'
 
 function App(): React.JSX.Element {
   const [bundles, setBundles] = useState<Bundle[]>([])
   const [name, setName] = useState('')
+  const [openWindows, setOpenWindows] = useState<DetectedWindow[]>([])
 
   const refresh = async (): Promise<void> => {
     const list = await window.api.bundles.list()
@@ -24,6 +26,11 @@ function App(): React.JSX.Element {
   const handleDelete = async (id: string): Promise<void> => {
     await window.api.bundles.delete(id)
     refresh()
+  }
+
+  const handleScanWindows = async (): Promise<void> => {
+    const windows = await window.api.system.listOpenWindows()
+    setOpenWindows(windows)
   }
 
   return (
@@ -47,6 +54,30 @@ function App(): React.JSX.Element {
       </ul>
 
       {bundles.length === 0 && <p>No bundles yet — create one above.</p>}
+
+      <hr style={{ margin: '24px 0' }} />
+
+      <h2>Debug: Open Windows</h2>
+      <button onClick={handleScanWindows}>Scan Open Windows</button>
+
+      <table style={{ marginTop: 12, width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
+            <th>Title</th>
+            <th>Process ID</th>
+            <th>Executable Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          {openWindows.map((w) => (
+            <tr key={w.id} style={{ borderBottom: '1px solid #eee' }}>
+              <td>{w.title || '(no title)'}</td>
+              <td>{w.processId}</td>
+              <td style={{ fontSize: 12 }}>{w.executablePath}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

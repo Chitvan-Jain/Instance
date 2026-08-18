@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { Bundle } from '../shared/bundle'
+import type { DetectedWindow } from '../shared/window'
 
 // Custom APIs for renderer
 const api = {
@@ -8,12 +9,12 @@ const api = {
     list: (): Promise<Bundle[]> => ipcRenderer.invoke('bundles:list'),
     create: (name: string): Promise<Bundle> => ipcRenderer.invoke('bundles:create', name),
     delete: (id: string): Promise<void> => ipcRenderer.invoke('bundles:delete', id)
+  },
+  system: {
+    listOpenWindows: (): Promise<DetectedWindow[]> => ipcRenderer.invoke('windows:list')
   }
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
