@@ -1,13 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { Bundle } from '../shared/bundle'
+import type { Bundle, ApplicationSnapshot } from '../shared/bundle'
 import type { DetectedWindow } from '../shared/window'
 
-// Custom APIs for renderer
 const api = {
   bundles: {
     list: (): Promise<Bundle[]> => ipcRenderer.invoke('bundles:list'),
-    create: (name: string): Promise<Bundle> => ipcRenderer.invoke('bundles:create', name),
+    create: (name: string, applications: ApplicationSnapshot[]): Promise<Bundle> =>
+      ipcRenderer.invoke('bundles:create', name, applications),
     delete: (id: string): Promise<void> => ipcRenderer.invoke('bundles:delete', id)
   },
   system: {

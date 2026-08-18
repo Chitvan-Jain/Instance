@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { randomUUID } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { Bundle } from '../shared/bundle'
+import type { Bundle, ApplicationSnapshot } from '../shared/bundle'
 
 const SCHEMA_VERSION = 1
 
@@ -32,7 +32,7 @@ export function listBundles(): Bundle[] {
   return readAll()
 }
 
-export function createFakeBundle(name: string): Bundle {
+export function createBundle(name: string, applications: ApplicationSnapshot[]): Bundle {
   const now = new Date().toISOString()
   const bundle: Bundle = {
     id: randomUUID(),
@@ -42,7 +42,7 @@ export function createFakeBundle(name: string): Bundle {
     schemaVersion: SCHEMA_VERSION,
     monitorLayoutSignature: 'unknown',
     chromeWindows: [],
-    applications: []
+    applications
   }
   const bundles = readAll()
   bundles.push(bundle)

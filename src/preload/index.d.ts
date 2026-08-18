@@ -1,10 +1,10 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import type { Bundle } from '../shared/bundle'
+import type { Bundle, ApplicationSnapshot } from '../shared/bundle'
 import type { DetectedWindow } from '../shared/window'
 
 interface BundleAPI {
   list: () => Promise<Bundle[]>
-  create: (name: string) => Promise<Bundle>
+  create: (name: string, applications: ApplicationSnapshot[]) => Promise<Bundle>
   delete: (id: string) => Promise<void>
 }
 

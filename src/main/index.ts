@@ -2,11 +2,11 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { listBundles, createFakeBundle, deleteBundle } from './bundleStore'
+import { listBundles, createBundle, deleteBundle } from './bundleStore'
 import { listOpenWindows } from './windowInspector'
+import type { ApplicationSnapshot } from '../shared/bundle'
 
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -47,7 +47,11 @@ app.whenReady().then(() => {
 
   // Bundle CRUD
   ipcMain.handle('bundles:list', () => listBundles())
-  ipcMain.handle('bundles:create', (_event, name: string) => createFakeBundle(name))
+  ipcMain.handle(
+    'bundles:create',
+    (_event, name: string, applications: ApplicationSnapshot[]) =>
+      createBundle(name, applications)
+  )
   ipcMain.handle('bundles:delete', (_event, id: string) => deleteBundle(id))
 
   // Debug: window enumeration

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { Bundle } from '@shared/bundle'
 import type { DetectedWindow } from '@shared/window'
+import { toApplicationSnapshot } from '@shared/window'
 
 function App(): React.JSX.Element {
   const [bundles, setBundles] = useState<Bundle[]>([])
   const [name, setName] = useState('')
   const [openWindows, setOpenWindows] = useState<DetectedWindow[]>([])
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   const refresh = async (): Promise<void> => {
     const list = await window.api.bundles.list()
@@ -18,8 +20,14 @@ function App(): React.JSX.Element {
 
   const handleCreate = async (): Promise<void> => {
     if (!name.trim()) return
-    await window.api.bundles.create(name.trim())
+
+    const applications = openWindows
+      .filter((w) => selectedIds.has(w.id))
+      .map(toApplicationSnapshot)
+
+    await window.api.bundles.create(name.trim(), applications)
     setName('')
+    setSelectedIds(new Set())
     refresh()
   }
 
@@ -31,6 +39,19 @@ function App(): React.JSX.Element {
   const handleScanWindows = async (): Promise<void> => {
     const windows = await window.api.system.listOpenWindows()
     setOpenWindows(windows)
+    setSelectedIds(new Set())
+  }
+
+  const toggleSelected = (id: number): void => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
   }
 
   return (
@@ -39,7 +60,7 @@ function App(): React.JSX.Element {
 
       <div style={{ marginBottom: 16 }}>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bundle name" />
-        <button onClick={handleCreate}>Bundle</button>
+        <button onClick={handleCreate}>Bundle ({selectedIds.size} apps)</button>
       </div>
 
       <ul>
@@ -59,10 +80,12 @@ function App(): React.JSX.Element {
 
       <h2>Debug: Open Windows</h2>
       <button onClick={handleScanWindows}>Scan Open Windows</button>
+      <span style={{ marginLeft: 12 }}>{selectedIds.size} selected</span>
 
       <table style={{ marginTop: 12, width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
+            <th></th>
             <th>Title</th>
             <th>Process ID</th>
             <th>Executable Path</th>
@@ -71,6 +94,13 @@ function App(): React.JSX.Element {
         <tbody>
           {openWindows.map((w) => (
             <tr key={w.id} style={{ borderBottom: '1px solid #eee' }}>
+              <td>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(w.id)}
+                  onChange={() => toggleSelected(w.id)}
+                />
+              </td>
               <td>{w.title || '(no title)'}</td>
               <td>{w.processId}</td>
               <td style={{ fontSize: 12 }}>{w.executablePath}</td>
