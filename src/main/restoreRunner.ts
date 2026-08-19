@@ -1,6 +1,11 @@
 import type { Bundle, ApplicationSnapshot } from '../shared/bundle'
 import type { RestoreResult } from '../shared/restore'
-import { launchApplication, waitForWindowByProcessId, setWindowBounds } from './windowController'
+import {
+  launchApplication,
+  snapshotWindowIds,
+  waitForNewWindow,
+  setWindowBounds
+} from './windowController'
 
 export async function restoreBundle(bundle: Bundle): Promise<RestoreResult[]> {
   const results: RestoreResult[] = []
@@ -14,8 +19,9 @@ export async function restoreBundle(bundle: Bundle): Promise<RestoreResult[]> {
 
 async function restoreApplication(app: ApplicationSnapshot): Promise<RestoreResult> {
   try {
+    const baseline = snapshotWindowIds()
     const pid = launchApplication(app.executablePath, app.launchArguments)
-    const win = await waitForWindowByProcessId(pid)
+    const win = await waitForNewWindow(baseline, pid, app.windowTitleHint)
 
     if (!win) {
       return {

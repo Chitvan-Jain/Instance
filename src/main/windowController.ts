@@ -16,17 +16,34 @@ export function launchApplication(executablePath: string, args: string[] = []): 
   return child.pid
 }
 
-export async function waitForWindowByProcessId(
+export function snapshotWindowIds(): Set<number> {
+  return new Set(listOpenWindows().map((w) => w.id))
+}
+
+// Matches a window either by exact process ID (works for well-behaved apps)
+// or by being a brand-new window with a matching title (covers apps that
+// relaunch themselves under a different process, e.g. Windows Store apps).
+export async function waitForNewWindow(
+  baselineWindowIds: Set<number>,
   processId: number,
+  titleHint: string,
   timeoutMs = 10000,
   pollIntervalMs = 300
 ): Promise<DetectedWindow | null> {
   const start = Date.now()
+
   while (Date.now() - start < timeoutMs) {
-    const match = listOpenWindows().find((w) => w.processId === processId)
+    const match = listOpenWindows().find((w) => {
+      const isNew = !baselineWindowIds.has(w.id)
+      const matchesProcess = w.processId === processId
+      const matchesTitle = titleHint.length > 0 && w.title.includes(titleHint)
+      return isNew && (matchesProcess || matchesTitle)
+    })
+
     if (match) return match
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs))
   }
+
   return null
 }
 
