@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { listBundles, createBundle, deleteBundle } from './bundleStore'
 import { listOpenWindows } from './windowInspector'
+import { restoreBundle } from './restoreRunner'
 import type { ApplicationSnapshot } from '../shared/bundle'
 
 function createWindow(): void {
@@ -53,6 +54,15 @@ app.whenReady().then(() => {
       createBundle(name, applications)
   )
   ipcMain.handle('bundles:delete', (_event, id: string) => deleteBundle(id))
+
+  // Restore
+  ipcMain.handle('bundles:launch', async (_event, id: string) => {
+    const bundle = listBundles().find((b) => b.id === id)
+    if (!bundle) {
+      throw new Error(`Bundle not found: ${id}`)
+    }
+    return restoreBundle(bundle)
+  })
 
   // Debug: window enumeration
   ipcMain.handle('windows:list', () => listOpenWindows())

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Bundle } from '@shared/bundle'
 import type { DetectedWindow } from '@shared/window'
+import type { RestoreResult } from '@shared/restore'
 import { toApplicationSnapshot } from '@shared/window'
 
 function App(): React.JSX.Element {
@@ -8,6 +9,8 @@ function App(): React.JSX.Element {
   const [name, setName] = useState('')
   const [openWindows, setOpenWindows] = useState<DetectedWindow[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [restoreResults, setRestoreResults] = useState<Record<string, RestoreResult[]>>({})
+  const [restoringId, setRestoringId] = useState<string | null>(null)
 
   const refresh = async (): Promise<void> => {
     const list = await window.api.bundles.list()
@@ -34,6 +37,16 @@ function App(): React.JSX.Element {
   const handleDelete = async (id: string): Promise<void> => {
     await window.api.bundles.delete(id)
     refresh()
+  }
+
+  const handleLaunch = async (id: string): Promise<void> => {
+    setRestoringId(id)
+    try {
+      const results = await window.api.bundles.launch(id)
+      setRestoreResults((prev) => ({ ...prev, [id]: results }))
+    } finally {
+      setRestoringId(null)
+    }
   }
 
   const handleScanWindows = async (): Promise<void> => {
@@ -65,11 +78,39 @@ function App(): React.JSX.Element {
 
       <ul>
         {bundles.map((b) => (
-          <li key={b.id}>
-            {b.name}
-            <button onClick={() => handleDelete(b.id)} style={{ marginLeft: 8 }}>
-              Delete
-            </button>
+          <li key={b.id} style={{ marginBottom: 12 }}>
+            <div>
+              <strong>{b.name}</strong> ({b.applications.length} apps)
+              <button
+                onClick={() => handleLaunch(b.id)}
+                disabled={restoringId === b.id || b.applications.length === 0}
+                style={{ marginLeft: 8 }}
+              >
+                {restoringId === b.id ? 'Launching…' : 'Launch'}
+              </button>
+              <button onClick={() => handleDelete(b.id)} style={{ marginLeft: 8 }}>
+                Delete
+              </button>
+            </div>
+
+            {b.applications.length > 0 && (
+              <ul style={{ fontSize: 12, color: '#555' }}>
+                {b.applications.map((a, i) => (
+                  <li key={i}>{a.windowTitleHint || a.executablePath}</li>
+                ))}
+              </ul>
+            )}
+
+            {restoreResults[b.id] && (
+              <ul style={{ fontSize: 12 }}>
+                {restoreResults[b.id].map((r, i) => (
+                  <li key={i} style={{ color: r.status === 'failed' ? 'crimson' : 'green' }}>
+                    {r.windowTitleHint || '(app)'}: {r.status}
+                    {r.error ? ` — ${r.error}` : ''}
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
