@@ -50,7 +50,7 @@ export async function waitForNewWindow(
 const WIN32_TYPE_DEFINITION = `
 using System;
 using System.Runtime.InteropServices;
-public class DeskFlowWin32 {
+public class InstanceWin32 {
   [DllImport("user32.dll")]
   public static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 }
@@ -59,7 +59,7 @@ public class DeskFlowWin32 {
 export function setWindowBounds(windowId: number, bounds: Bounds): Promise<void> {
   const psCommand = [
     `Add-Type -TypeDefinition '${WIN32_TYPE_DEFINITION}'`,
-    `[DeskFlowWin32]::MoveWindow([IntPtr]${windowId}, ${bounds.x}, ${bounds.y}, ${bounds.width}, ${bounds.height}, $true)`
+    `[InstanceWin32]::MoveWindow([IntPtr]${windowId}, ${bounds.x}, ${bounds.y}, ${bounds.width}, ${bounds.height}, $true)`
   ].join('; ')
 
   return new Promise((resolve, reject) => {

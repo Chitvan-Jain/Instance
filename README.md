@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 # Instance
-=======
-# deskflow
 
 An Electron application with React and TypeScript
 
@@ -35,4 +32,3 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
->>>>>>> 4cebb7f (Initial Commit(Project setup))
