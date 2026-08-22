@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Instance Bridge",
+  "version": "0.1.0",
+  "description": "Reports Chrome's open windows, tabs, and tab groups to the Instance desktop app.",
+  "permissions": ["tabs", "tabGroups", "nativeMessaging"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Instance: Log Chrome State"
+  }
+}
